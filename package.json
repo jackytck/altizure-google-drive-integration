@@ -1,0 +1,27 @@
+{
+  "name": "altizure-google-drive-integration",
+  "version": "1.0.0",
+  "description": "Import images to Altizure from Google Drive",
+  "main": "index.js",
+  "repository": "https://github.com/jackytck/altizure-google-drive-integration.git",
+	"scripts": {
+    "lint": "eslint *.js",
+    "test": "yarn lint",
+    "start": "parcel index.html",
+    "build": "parcel build --public-url https://jackytck.github.io/altizure-drive-integration index.html",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+		"babel-eslint": "^10.0.1",
+    "eslint": "^5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "gh-pages": "^2.0.1",
+    "parcel-bundler": "^1.10.3"
+  },
+  "author": "Jacky Tang <jackytck@gmail.com>",
+  "license": "MIT"
+}
