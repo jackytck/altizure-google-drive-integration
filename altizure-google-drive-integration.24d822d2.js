@@ -10,4 +10,4 @@ parcelRequire=function(e,r,n,t){var i="function"==typeof parcelRequire&&parcelRe
 var global = arguments[3];
 var e=arguments[3],o=require("./altizure"),r=a(require("./google"));function a(e){return e&&e.__esModule?e:{default:e}}e.onUpload=o.onUpload,e.onLogout=o.onLogout,e.onApiLoad=(0,r.default)(o.pickerCallback),(0,o.render)("altizure-container");
 },{"./altizure":"8v4l","./google":"XoA9"}]},{},["Focm"], null)
-//# sourceMappingURL=https://jackytck.github.io/altizure-drive-integration/altizure-google-drive-integration.24d822d2.map
+//# sourceMappingURL=https://jackytck.github.io/altizure-google-drive-integration/altizure-google-drive-integration.24d822d2.map
