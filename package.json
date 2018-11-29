@@ -8,7 +8,7 @@
     "lint": "eslint *.js",
     "test": "yarn lint",
     "start": "parcel index.html",
-    "build": "parcel build --public-url https://jackytck.github.io/altizure-drive-integration index.html",
+    "build": "parcel build --public-url https://jackytck.github.io/altizure-google-drive-integration index.html",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
