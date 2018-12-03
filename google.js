@@ -48,7 +48,7 @@ function handleAuthResult (authResult) {
 function createPicker () {
   if (pickerApiLoaded && oauthToken) {
     const picker = new google.picker.PickerBuilder()
-      .addView(google.picker.ViewId.PHOTOS)
+      .addView(google.picker.ViewId.DOCS_IMAGES)
       .setOAuthToken(oauthToken)
       .setDeveloperKey(G_DEV_KEY)
       .setCallback(callback)
