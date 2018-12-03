@@ -44,11 +44,18 @@ function handleAuthResult (authResult) {
   }
 }
 
+function pickFolderView () {
+  return new google.picker.DocsView()
+    .setIncludeFolders(true)
+    .setMimeTypes('application/vnd.google-apps.folder')
+    .setSelectFolderEnabled(true)
+}
+
 // Create and render a Picker object for picking user Photos.
 function createPicker () {
   if (pickerApiLoaded && oauthToken) {
     const picker = new google.picker.PickerBuilder()
-      .addView(google.picker.ViewId.FOLDERS)
+      .addView(pickFolderView())
       .setOAuthToken(oauthToken)
       .setDeveloperKey(G_DEV_KEY)
       .setCallback(callback)
