@@ -336,6 +336,7 @@ function queryFiles(folderId) {
 }
 /**
  * {
+ *  fileExtension: "JPG"
  *  id: "0B574oGEFI9O6QWE0ejZQVnREckE"
  *  md5Checksum: "47399b72b3698ece2f33990bda3b6fe9"
  *  originalFilename: "DJI_0104.JPG"
@@ -347,6 +348,10 @@ function renderFiles(files) {
   selectedFiles = [];
   var fileNames = [];
   files.forEach(function (f) {
+    if (!f.fileExtension || !['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
+      return;
+    }
+
     fileNames.push("<li>".concat(f.originalFilename, "</li>"));
     selectedFiles.push({
       name: f.originalFilename,
@@ -516,7 +521,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57500" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61326" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
