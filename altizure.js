@@ -168,6 +168,7 @@ function queryFiles (folderId) {
 
 /**
  * {
+ *  fileExtension: "JPG"
  *  id: "0B574oGEFI9O6QWE0ejZQVnREckE"
  *  md5Checksum: "47399b72b3698ece2f33990bda3b6fe9"
  *  originalFilename: "DJI_0104.JPG"
@@ -177,7 +178,7 @@ function renderFiles (files) {
   selectedFiles = []
   const fileNames = []
   files.forEach(f => {
-    if (!['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
+    if (!f.fileExtension || !['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
       return
     }
     fileNames.push(`<li>${f.originalFilename}</li>`)
