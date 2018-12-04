@@ -40,6 +40,7 @@ function onPickerApiLoad () {
 function handleAuthResult (authResult) {
   if (authResult && !authResult.error) {
     oauthToken = authResult.access_token
+    global.oauthToken = oauthToken
     createPicker()
   }
 }

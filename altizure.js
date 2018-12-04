@@ -1,4 +1,4 @@
-/* global google */
+/* global gapi, google */
 import {
   ALTI_CALLBACK,
   ALTI_KEY
@@ -140,13 +140,26 @@ function updateImageList () {
 
 // A simple callback implementation.
 function pickerCallback (data) {
-  let url = 'nothing'
+  let folderId = ''
   if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-    var doc = data[google.picker.Response.DOCUMENTS][0]
-    url = doc[google.picker.Document.URL]
+    folderId = data[google.picker.Document.ID]
+    listFiles(folderId)
   }
-  const message = 'You picked: ' + url
-  console.log(message)
+}
+
+function listFiles (folderId) {
+  gapi.client.drive.files.list({
+    'q': `'${folderId}' in parents`,
+    'fields': 'files(id,originalFilename,fileExtension,md5Checksum)'
+  })
+    .then(function (response) {
+      // Handle the results here (response.result has the parsed body).
+      console.log('token', global.oauthToken)
+      console.log('Response', response)
+    },
+    function (err) {
+      console.error('Execute error', err)
+    })
 }
 
 function render (divId) {
