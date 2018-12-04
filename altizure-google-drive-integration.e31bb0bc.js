@@ -115,11 +115,11 @@ var ALTI_KEY = '7MkQf8UggsPaadvrlKALspJWZejZAJOLHn3cnIy';
 exports.ALTI_KEY = ALTI_KEY;
 var ALTI_CALLBACK = 'https://jackytck.github.io/altizure-google-drive-integration/index.html';
 exports.ALTI_CALLBACK = ALTI_CALLBACK;
-var G_DEV_KEY = 'AIzaSyBV_Eo3xawQGDWyjbh_b3uryevkH_qPlL0';
+var G_DEV_KEY = 'AIzaSyAeyIi9-LcFHT3cplvMkQl8q9-3Ur-iUu8';
 exports.G_DEV_KEY = G_DEV_KEY;
-var G_CLIENT_ID = '844127801372-chhhiuuoabd5mvt49k7hecb2mhd970mg.apps.googleusercontent.com';
+var G_CLIENT_ID = '753960030086-5k9v19hregov1kjboto79qavpgfbjt4p.apps.googleusercontent.com';
 exports.G_CLIENT_ID = G_CLIENT_ID;
-var G_SCOPE = 'https://www.googleapis.com/auth/drive.photos.readonly';
+var G_SCOPE = 'https://www.googleapis.com/auth/drive.readonly';
 exports.G_SCOPE = G_SCOPE;
 },{}],"helper.js":[function(require,module,exports) {
 "use strict";
@@ -187,6 +187,7 @@ function tokenStateFromHash() {
   };
 }
 },{}],"altizure.js":[function(require,module,exports) {
+var global = arguments[3];
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -277,7 +278,7 @@ function renderUpload(divId, token) {
     token: token
   }).then(function (res) {
     var user = res.data.my.self.name;
-    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Choose from Dropbox</p>\n            <p>2. Enter pid</p>\n            <p>3. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
+    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Authenticate</p>\n            <p>2. Enter pid</p>\n            <p>3. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
     document.getElementById(divId).innerHTML = html;
   });
 }
@@ -307,15 +308,25 @@ function updateImageList() {
 
 
 function pickerCallback(data) {
-  var url = 'nothing';
+  var folderId = '';
 
   if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-    var doc = data[google.picker.Response.DOCUMENTS][0];
-    url = doc[google.picker.Document.URL];
+    folderId = data[google.picker.Document.ID];
+    listFiles(folderId);
   }
+}
 
-  var message = 'You picked: ' + url;
-  console.log(message);
+function listFiles(folderId) {
+  gapi.client.drive.files.list({
+    'q': "'".concat(folderId, "' in parents"),
+    'fields': 'files(id,originalFilename,fileExtension,md5Checksum)'
+  }).then(function (response) {
+    // Handle the results here (response.result has the parsed body).
+    console.log('token', global.oauthToken);
+    console.log('Response', response);
+  }, function (err) {
+    console.error('Execute error', err);
+  });
 }
 
 function render(divId) {
@@ -346,7 +357,7 @@ function render(divId) {
 
       (0, _helper.setCookie)('state', _state);
       var authUrl = "https://api.altizure.com/auth/start?client_id=".concat(_config.ALTI_KEY, "&response_type=token&redirect_uri=").concat(_config.ALTI_CALLBACK, "&state=").concat(_state);
-      document.getElementById(divId).innerHTML = "\n            <h1>Altizure Dropbox Demo</h1>\n            <button type='reset' onclick=\"location.href='".concat(authUrl, "'\">\n              Login with Altizure account\n            </button>\n          ");
+      document.getElementById(divId).innerHTML = "\n            <h1>Altizure Google Drive Demo</h1>\n            <button type='reset' onclick=\"location.href='".concat(authUrl, "'\">\n              Login with Altizure account\n            </button>\n          ");
     }
   } else {
     ALTI_TOKEN = tokenCookie;
@@ -354,6 +365,7 @@ function render(divId) {
   }
 }
 },{"./config":"config.js","./helper":"helper.js"}],"google.js":[function(require,module,exports) {
+var global = arguments[3];
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -380,7 +392,6 @@ function onApiLoad() {
 }
 
 function onAuthApiLoad() {
-  console.log('nat nat?');
   var authBtn = document.getElementById('auth');
   authBtn.disabled = false;
   authBtn.addEventListener('click', function () {
@@ -399,14 +410,33 @@ function onPickerApiLoad() {
 function handleAuthResult(authResult) {
   if (authResult && !authResult.error) {
     oauthToken = authResult.access_token;
+    global.oauthToken = oauthToken;
     createPicker();
+    createClient();
+  } else {
+    console.error(authResult);
   }
+}
+
+function pickFolderView() {
+  return new google.picker.DocsView().setIncludeFolders(true).setMimeTypes('application/vnd.google-apps.folder').setSelectFolderEnabled(true);
+}
+
+function createClient() {
+  gapi.client.init({
+    apiKey: _config.G_DEV_KEY,
+    clientId: _config.G_CLIENT_ID,
+    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    scope: _config.G_SCOPE
+  }).then(function () {
+    return console.log('gapi client loaded');
+  });
 } // Create and render a Picker object for picking user Photos.
 
 
 function createPicker() {
   if (pickerApiLoaded && oauthToken) {
-    var picker = new google.picker.PickerBuilder().addView(google.picker.ViewId.PHOTOS).setOAuthToken(oauthToken).setDeveloperKey(_config.G_DEV_KEY).setCallback(callback).build();
+    var picker = new google.picker.PickerBuilder().addView(pickFolderView()).setOAuthToken(oauthToken).setDeveloperKey(_config.G_DEV_KEY).setCallback(callback).build();
     picker.setVisible(true);
   }
 }
@@ -454,7 +484,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51704" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57101" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
