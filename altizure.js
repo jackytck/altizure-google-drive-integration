@@ -37,6 +37,7 @@ function onUpload () {
       token: global.oauthToken
     }))
   })
+  setInterval(updateImageList, 5000)
 }
 
 function uploadSingle ({ pid, name, url, md5, token }) {
@@ -51,7 +52,6 @@ function uploadSingle ({ pid, name, url, md5, token }) {
     console.log(res.data)
     updateImageList()
   })
-  setInterval(updateImageList, 5000)
 }
 
 function gql ({ query, token }) {
@@ -168,7 +168,7 @@ function renderFiles (files) {
   selectedFiles = []
   const fileNames = []
   files.forEach(f => {
-    if (!f.fileExtension || !['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
+    if (!f.fileExtension || !['jpg', 'png'].includes(f.fileExtension.toLowerCase())) {
       return
     }
     fileNames.push(`<li>${f.originalFilename}</li>`)
@@ -178,6 +178,7 @@ function renderFiles (files) {
       md5: f.md5Checksum
     })
   })
+  fileNames.sort()
   document.getElementById('file-list').innerHTML = `<p>Selected files:</p><ol>${fileNames.join('')}</ol>`
 }
 
