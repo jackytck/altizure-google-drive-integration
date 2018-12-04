@@ -166,7 +166,7 @@ function queryFiles (folderId) {
  */
 function renderFiles (files) {
   selectedFiles = []
-  const fileNames = []
+  let fileNames = []
   files.forEach(f => {
     if (!f.fileExtension || !['jpg', 'png'].includes(f.fileExtension.toLowerCase())) {
       return
@@ -178,8 +178,22 @@ function renderFiles (files) {
       md5: f.md5Checksum
     })
   })
+  selectedFiles = uniqBy(selectedFiles, 'md5')
+  fileNames = [...new Set(fileNames)]
   fileNames.sort()
   document.getElementById('file-list').innerHTML = `<p>Selected files:</p><ol>${fileNames.join('')}</ol>`
+}
+
+function uniqBy (arr, predicate) {
+  const cb = typeof predicate === 'function' ? predicate : o => o[predicate]
+
+  return [...arr.reduce((map, item) => {
+    const key = cb(item)
+
+    map.has(key) || map.set(key, item)
+
+    return map
+  }, new Map()).values()]
 }
 
 function render (divId) {
