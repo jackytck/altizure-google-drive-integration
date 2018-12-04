@@ -32,15 +32,17 @@ function onUpload () {
     uploadSingle(({
       pid,
       name: f.name,
-      url: f.link
+      url: f.link,
+      md5: f.md5,
+      token: global.oauthToken
     }))
   })
 }
 
-function uploadSingle ({ pid, name, url }) {
+function uploadSingle ({ pid, name, url, md5, token }) {
   const query = `
     mutation {
-      uploadImageURL(pid: "${pid}", url: "${url}", filename: "${name}") {
+      uploadImageURL(pid: "${pid}", url: "${url}", filename: "${name}", token: "${token}") {
         id
       }
     }
@@ -88,7 +90,7 @@ function renderUpload (divId, token) {
     const user = res.data.my.self.name
     const html = `
             <h3>Welcome ${user}!</h3>
-            <p>1. Press Authenticate</p>
+            <p>1. Press Google Drive</p>
             <p>2. Enter pid</p>
             <p>3. Press Upload</p>
             <input type="text" id="pid" name="pid" placeholder="pid" value="${pid}" />
@@ -142,24 +144,50 @@ function updateImageList () {
 function pickerCallback (data) {
   let folderId = ''
   if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-    folderId = data[google.picker.Document.ID]
-    listFiles(folderId)
+    const doc = data[google.picker.Response.DOCUMENTS][0]
+    folderId = doc[google.picker.Document.ID]
+    queryFiles(folderId)
   }
 }
 
-function listFiles (folderId) {
+function queryFiles (folderId) {
   gapi.client.drive.files.list({
-    'q': `'${folderId}' in parents`,
-    'fields': 'files(id,originalFilename,fileExtension,md5Checksum)'
+    q: `'${folderId}' in parents`,
+    fields: 'files(id,originalFilename,fileExtension,md5Checksum)',
+    pageSize: 1000
   })
     .then(function (response) {
       // Handle the results here (response.result has the parsed body).
-      console.log('token', global.oauthToken)
-      console.log('Response', response)
+      console.log('Result', response.result)
+      renderFiles(response.result.files)
     },
     function (err) {
       console.error('Execute error', err)
     })
+}
+
+/**
+ * {
+ *  id: "0B574oGEFI9O6QWE0ejZQVnREckE"
+ *  md5Checksum: "47399b72b3698ece2f33990bda3b6fe9"
+ *  originalFilename: "DJI_0104.JPG"
+ * }
+ */
+function renderFiles (files) {
+  selectedFiles = []
+  const fileNames = []
+  files.forEach(f => {
+    if (!['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
+      return
+    }
+    fileNames.push(`<li>${f.originalFilename}</li>`)
+    selectedFiles.push({
+      name: f.originalFilename,
+      url: `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
+      md5: f.md5Checksum
+    })
+  })
+  document.getElementById('file-list').innerHTML = `<p>Selected files:</p><ol>${fileNames.join('')}</ol>`
 }
 
 function render (divId) {

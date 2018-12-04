@@ -16,19 +16,22 @@ function setupGoogle (pickerCallback) {
 
 // Use the API Loader script to load google.picker and gapi.auth.
 function onApiLoad () {
-  gapi.load('auth2', onAuthApiLoad)
+  gapi.load('client:auth2', onAuthApiLoad)
   gapi.load('picker', onPickerApiLoad)
 }
 
 function onAuthApiLoad () {
-  console.log('nat nat?')
   const authBtn = document.getElementById('auth')
   authBtn.disabled = false
   authBtn.addEventListener('click', function () {
-    gapi.auth2.authorize({
-      client_id: G_CLIENT_ID,
-      scope: G_SCOPE
-    }, handleAuthResult)
+    if (!oauthToken) {
+      gapi.auth2.authorize({
+        client_id: G_CLIENT_ID,
+        scope: G_SCOPE
+      }, handleAuthResult)
+    } else {
+      createPicker()
+    }
   })
 }
 
@@ -42,6 +45,9 @@ function handleAuthResult (authResult) {
     oauthToken = authResult.access_token
     global.oauthToken = oauthToken
     createPicker()
+    createClient()
+  } else {
+    console.error(authResult)
   }
 }
 
@@ -50,6 +56,15 @@ function pickFolderView () {
     .setIncludeFolders(true)
     .setMimeTypes('application/vnd.google-apps.folder')
     .setSelectFolderEnabled(true)
+}
+
+function createClient () {
+  gapi.client.init({
+    apiKey: G_DEV_KEY,
+    clientId: G_CLIENT_ID,
+    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+    scope: G_SCOPE
+  }).then(() => console.log('gapi client loaded'))
 }
 
 // Create and render a Picker object for picking user Photos.
