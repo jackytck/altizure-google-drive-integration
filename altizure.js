@@ -126,19 +126,9 @@ function updateImageList () {
   `
   gql({ query, token: ALTI_TOKEN }).then(res => {
     const imgs = res.data.project.allImages.edges.map(x => `<li>${x.node.name}: ${x.node.state}</li>`)
-    document.getElementById('image-list').innerHTML = `<p>Project images:</p><ol>${imgs}</ol>`
+    document.getElementById('image-list').innerHTML = `<p>Project images:</p><ol>${imgs.join('')}</ol>`
   })
 }
-
-// function onSuccess (files) {
-//   selectedFiles = []
-//   const fileNames = []
-//   for (let i = 0; i < files.length; i++) {
-//     fileNames.push(`<li>${files[i].name}</li>`)
-//     selectedFiles.push(files[i])
-//   }
-//   document.getElementById('file-list').innerHTML = `<p>Selected files:</p><ol>${fileNames.join('')}</ol>`
-// }
 
 // A simple callback implementation.
 function pickerCallback (data) {
@@ -184,7 +174,7 @@ function renderFiles (files) {
     fileNames.push(`<li>${f.originalFilename}</li>`)
     selectedFiles.push({
       name: f.originalFilename,
-      url: `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
+      link: `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
       md5: f.md5Checksum
     })
   })
