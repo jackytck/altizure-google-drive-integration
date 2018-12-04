@@ -227,7 +227,9 @@ function onUpload() {
     uploadSingle({
       pid: pid,
       name: f.name,
-      url: f.link
+      url: f.link,
+      md5: f.md5,
+      token: global.oauthToken
     });
   });
 }
@@ -235,8 +237,10 @@ function onUpload() {
 function uploadSingle(_ref) {
   var pid = _ref.pid,
       name = _ref.name,
-      url = _ref.url;
-  var query = "\n    mutation {\n      uploadImageURL(pid: \"".concat(pid, "\", url: \"").concat(url, "\", filename: \"").concat(name, "\") {\n        id\n      }\n    }\n  ");
+      url = _ref.url,
+      md5 = _ref.md5,
+      token = _ref.token;
+  var query = "\n    mutation {\n      uploadImageURL(pid: \"".concat(pid, "\", url: \"").concat(url, "\", filename: \"").concat(name, "\", token: \"").concat(token, "\") {\n        id\n      }\n    }\n  ");
   gql({
     query: query,
     token: ALTI_TOKEN
@@ -278,7 +282,7 @@ function renderUpload(divId, token) {
     token: token
   }).then(function (res) {
     var user = res.data.my.self.name;
-    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Authenticate</p>\n            <p>2. Enter pid</p>\n            <p>3. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
+    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Google Drive</p>\n            <p>2. Enter pid</p>\n            <p>3. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
     document.getElementById(divId).innerHTML = html;
   });
 }
@@ -311,22 +315,46 @@ function pickerCallback(data) {
   var folderId = '';
 
   if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-    folderId = data[google.picker.Document.ID];
-    listFiles(folderId);
+    var doc = data[google.picker.Response.DOCUMENTS][0];
+    folderId = doc[google.picker.Document.ID];
+    queryFiles(folderId);
   }
 }
 
-function listFiles(folderId) {
+function queryFiles(folderId) {
   gapi.client.drive.files.list({
-    'q': "'".concat(folderId, "' in parents"),
-    'fields': 'files(id,originalFilename,fileExtension,md5Checksum)'
+    q: "'".concat(folderId, "' in parents"),
+    fields: 'files(id,originalFilename,fileExtension,md5Checksum)',
+    pageSize: 1000
   }).then(function (response) {
     // Handle the results here (response.result has the parsed body).
-    console.log('token', global.oauthToken);
-    console.log('Response', response);
+    console.log('Result', response.result);
+    renderFiles(response.result.files);
   }, function (err) {
     console.error('Execute error', err);
   });
+}
+/**
+ * {
+ *  id: "0B574oGEFI9O6QWE0ejZQVnREckE"
+ *  md5Checksum: "47399b72b3698ece2f33990bda3b6fe9"
+ *  originalFilename: "DJI_0104.JPG"
+ * }
+ */
+
+
+function renderFiles(files) {
+  selectedFiles = [];
+  var fileNames = [];
+  files.forEach(function (f) {
+    fileNames.push("<li>".concat(f.originalFilename, "</li>"));
+    selectedFiles.push({
+      name: f.originalFilename,
+      url: "https://www.googleapis.com/drive/v3/files/".concat(f.id, "?alt=media"),
+      md5: f.md5Checksum
+    });
+  });
+  document.getElementById('file-list').innerHTML = "<p>Selected files:</p><ol>".concat(fileNames.join(''), "</ol>");
 }
 
 function render(divId) {
@@ -395,10 +423,14 @@ function onAuthApiLoad() {
   var authBtn = document.getElementById('auth');
   authBtn.disabled = false;
   authBtn.addEventListener('click', function () {
-    gapi.auth2.authorize({
-      client_id: _config.G_CLIENT_ID,
-      scope: _config.G_SCOPE
-    }, handleAuthResult);
+    if (!oauthToken) {
+      gapi.auth2.authorize({
+        client_id: _config.G_CLIENT_ID,
+        scope: _config.G_SCOPE
+      }, handleAuthResult);
+    } else {
+      createPicker();
+    }
   });
 }
 
@@ -484,7 +516,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60812" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57500" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
