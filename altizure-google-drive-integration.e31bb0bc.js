@@ -202,7 +202,14 @@ var _config = require("./config");
 
 var _helper = require("./helper");
 
-/* global gapi, google */
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
 var ALTI_TOKEN = '';
 var selectedFiles = [];
 
@@ -232,6 +239,7 @@ function onUpload() {
       token: global.oauthToken
     });
   });
+  setInterval(updateImageList, 5000);
 }
 
 function uploadSingle(_ref) {
@@ -248,7 +256,6 @@ function uploadSingle(_ref) {
     console.log(res.data);
     updateImageList();
   });
-  setInterval(updateImageList, 5000);
 }
 
 function gql(_ref2) {
@@ -282,7 +289,7 @@ function renderUpload(divId, token) {
     token: token
   }).then(function (res) {
     var user = res.data.my.self.name;
-    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Google Drive</p>\n            <p>2. Enter pid</p>\n            <p>3. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
+    var html = "\n            <h3>Welcome ".concat(user, "!</h3>\n            <p>1. Press Google Drive</p>\n            <p>2. Choose a folder of images</p>\n            <p>3. Click Select</p>\n            <p>4. Enter PID of Altizure project</p>\n            <p>5. Press Upload</p>\n            <input type=\"text\" id=\"pid\" name=\"pid\" placeholder=\"pid\" value=\"").concat(pid, "\" />\n            <button onclick=\"onUpload()\">Upload</button>\n            <div><div id=\"file-list\" /></div>\n            <div><div id=\"image-list\" /></div>\n            <br/>\n            <br/>\n            <button onclick=\"onLogout()\">Logout</button>\n          ");
     document.getElementById(divId).innerHTML = html;
   });
 }
@@ -297,18 +304,9 @@ function updateImageList() {
     var imgs = res.data.project.allImages.edges.map(function (x) {
       return "<li>".concat(x.node.name, ": ").concat(x.node.state, "</li>");
     });
-    document.getElementById('image-list').innerHTML = "<p>Project images:</p><ol>".concat(imgs, "</ol>");
+    document.getElementById('image-list').innerHTML = "<p>Project images:</p><ol>".concat(imgs.join(''), "</ol>");
   });
-} // function onSuccess (files) {
-//   selectedFiles = []
-//   const fileNames = []
-//   for (let i = 0; i < files.length; i++) {
-//     fileNames.push(`<li>${files[i].name}</li>`)
-//     selectedFiles.push(files[i])
-//   }
-//   document.getElementById('file-list').innerHTML = `<p>Selected files:</p><ol>${fileNames.join('')}</ol>`
-// }
-// A simple callback implementation.
+} // A simple callback implementation.
 
 
 function pickerCallback(data) {
@@ -348,18 +346,32 @@ function renderFiles(files) {
   selectedFiles = [];
   var fileNames = [];
   files.forEach(function (f) {
-    if (!f.fileExtension || !['jpg', 'png', 'json', 'csv'].includes(f.fileExtension.toLowerCase())) {
+    if (!f.fileExtension || !['jpg', 'png'].includes(f.fileExtension.toLowerCase())) {
       return;
     }
 
     fileNames.push("<li>".concat(f.originalFilename, "</li>"));
     selectedFiles.push({
       name: f.originalFilename,
-      url: "https://www.googleapis.com/drive/v3/files/".concat(f.id, "?alt=media"),
+      link: "https://www.googleapis.com/drive/v3/files/".concat(f.id, "?alt=media"),
       md5: f.md5Checksum
     });
   });
+  selectedFiles = uniqBy(selectedFiles, 'md5');
+  fileNames = _toConsumableArray(new Set(fileNames));
+  fileNames.sort();
   document.getElementById('file-list').innerHTML = "<p>Selected files:</p><ol>".concat(fileNames.join(''), "</ol>");
+}
+
+function uniqBy(arr, predicate) {
+  var cb = typeof predicate === 'function' ? predicate : function (o) {
+    return o[predicate];
+  };
+  return _toConsumableArray(arr.reduce(function (map, item) {
+    var key = cb(item);
+    map.has(key) || map.set(key, item);
+    return map;
+  }, new Map()).values());
 }
 
 function render(divId) {
@@ -521,7 +533,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61326" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50274" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
